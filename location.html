@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>实时位置显示</title>
+    <style>
+        /* 基础样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #f0f2f5;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+
+        /* 顶部标题栏 */
+        .top-bar {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            height: 60px;
+            background: white;
+            color: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        .top-bar h1 {
+            font-size: 20px;
+            font-weight: normal;
+            text-align: center;
+            width: 100%;
+        }
+
+        /* 返回符号（优化交互体验） */
+        .back-arrow {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            font-size: 24px;
+            color: black;
+            text-decoration: none;
+            z-index: 1001;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%; /* 圆形点击区域，扩大可点击范围 */
+            transition: all 0.2s; /* 平滑过渡效果 */
+        }
+        
+        .back-arrow:hover {
+            color: #007bff; /* 悬停时变色，增强可点击感 */
+            background-color: #f0f7ff;
+        }
+        
+        .back-arrow:active {
+            transform: scale(0.9); /* 点击反馈 */
+        }
+
+        /* 中间内容区 */
+        .content {
+            margin: 80px 15px 70px; /* 避开顶部和底部栏 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* 正方形框容器 */
+        #mapContainer {
+            width: 300px; /* 正方形框的宽度 */
+            height: 300px; /* 正方形框的高度 */
+            border: 2px solid gray; /* 框的样式，改为灰色 */
+            position: relative;
+            overflow: hidden; /* 隐藏超出部分 */
+        }
+
+        /* 地图图片 */
+        #mapImage {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Canvas用于绘制位置标记 */
+        #locationCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* 位置信息提示 */
+        .location-info {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 返回符号 -->
+    <div class="back-arrow" onclick="goToHome()"><</div>
+
+    <!-- 顶部标题栏 -->
+    <div class="top-bar">
+        <h1>定位</h1>
+    </div>
+
+    <!-- 中间内容区 -->
+    <div class="content">
+        <!-- 正方形框容器 -->
+        <div id="mapContainer">
+            <img id="mapImage" src="map.jpg" alt="地图">
+            <canvas id="locationCanvas"></canvas>
+        </div>
+    </div>
+    
+    <!-- 位置信息提示 -->
+    <div class="location-info" id="locationStatus">
+        正在获取位置信息...
+    </div>
+
+    <script>
+        // 完善的跳转到首页功能
+        function goToHome() {
+            // 1. 统一使用系统首页路径 index.html
+            const homePage = "index.html";
+            
+            // 2. 检查是否已在首页，避免无效跳转
+            if (window.location.pathname.endsWith(homePage)) {
+                console.log("已在首页，无需跳转");
+                return;
+            }
+            
+            // 3. 尝试跳转并处理可能的错误
+            try {
+                console.log(`从 ${window.location.pathname} 跳转到首页`);
+                window.location.href = homePage;
+            } catch (error) {
+                console.error("首页跳转失败:", error);
+                alert("无法返回首页，请检查页面文件是否存在。");
+            }
+        }
+        
+        // 获取地图图片和Canvas元素
+        const mapImage = document.getElementById('mapImage');
+        const canvas = document.getElementById('locationCanvas');
+        const ctx = canvas.getContext('2d');
+        const locationStatus = document.getElementById('locationStatus');
+
+        // 设置Canvas大小与正方形框一致
+        const mapContainer = document.getElementById('mapContainer');
+        canvas.width = mapContainer.clientWidth;
+        canvas.height = mapContainer.clientHeight;
+
+        // 处理地图图片加载失败的情况
+        mapImage.onerror = function() {
+            // 显示默认地图背景
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#e8eaf6';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            // 绘制简单网格
+            ctx.strokeStyle = '#c5cae9';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= canvas.width; i += 30) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i, canvas.height);
+                ctx.stroke();
+            }
+            for (let i = 0; i <= canvas.height; i += 30) {
+                ctx.beginPath();
+                ctx.moveTo(0, i);
+                ctx.lineTo(canvas.width, i);
+                ctx.stroke();
+            }
+        };
+
+        // 获取用户位置
+        function getLocation() {
+            if (navigator.geolocation) {
+                locationStatus.textContent = "正在获取位置信息...";
+                navigator.geolocation.watchPosition(showPosition, handleError);
+            } else {
+                locationStatus.textContent = "您的浏览器不支持位置定位功能";
+            }
+        }
+
+        // 显示位置
+        function showPosition(position) {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+            const accuracy = position.coords.accuracy;
+            
+            // 更新状态文本
+            locationStatus.textContent = `当前位置：纬度 ${latitude.toFixed(6)}, 经度 ${longitude.toFixed(6)}（精度：${accuracy.toFixed(1)}米）`;
+
+            // 清除Canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 将经纬度转换为Canvas坐标（简单映射，实际项目需根据地图比例调整）
+            const x = ((longitude + 180) / 360) * canvas.width;
+            const y = ((90 - latitude) / 180) * canvas.height;
+
+            // 绘制位置标记（优化样式）
+            ctx.beginPath();
+            ctx.arc(x, y, 8, 0, 2 * Math.PI);
+            ctx.fillStyle = 'rgba(255, 0, 0, 0.7)';
+            ctx.fill();
+            ctx.strokeStyle = 'red';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // 绘制标记外圈
+            ctx.beginPath();
+            ctx.arc(x, y, 12, 0, 2 * Math.PI);
+            ctx.strokeStyle = 'rgba(255, 0, 0, 0.3)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+
+        // 处理错误
+        function handleError(error) {
+            switch (error.code) {
+                case error.PERMISSION_DENIED:
+                    locationStatus.textContent = "用户拒绝了位置请求，请在浏览器设置中允许定位";
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    locationStatus.textContent = "位置信息不可用，请稍后重试";
+                    break;
+                case error.TIMEOUT:
+                    locationStatus.textContent = "获取位置超时，请稍后重试";
+                    break;
+                case error.UNKNOWN_ERROR:
+                    locationStatus.textContent = "发生未知错误，请稍后重试";
+                    break;
+            }
+        }
+
+        // 开始获取位置
+        getLocation();
+    </script>
+</body>
+</html>

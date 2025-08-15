@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>社区医疗登录页面</title>
+    <style>
+        /* 全局样式重置 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* 页面布局 */
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f5f5f5; /* 背景色 */
+            font-family: "微软雅黑", sans-serif;
+        }
+
+        /* 容器：左侧图标 + 右侧登录框 */
+        .container {
+            display: flex;
+            align-items: center;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden; /* 隐藏圆角外的内容 */
+            width: 90%;
+            max-width: 900px; /* 增加最大宽度，让布局更宽松 */
+        }
+
+        /* 左侧图标区域 - 优化社区医疗图标显示 */
+        .left-section {
+            width: 40%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #87e8de 0%, #b4f3ee 100%); /* 背景渐变 */
+            padding: 40px 20px; /* 增加内边距，让图标有更多空间 */
+        }
+        .left-section img {
+            max-width: 100%; /* 改为最大宽度，确保图片适应容器 */
+            max-height: 250px; /* 限制最大高度，防止图片过大 */
+            height: auto;
+            object-fit: contain; /* 保持图片比例，完整显示 */
+        }
+
+        /* 右侧登录区域 */
+        .right-section {
+            width: 60%;
+            padding: 40px;
+        }
+
+        /* 右侧标题 */
+        .right-section h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+            font-size: 24px;
+        }
+
+        /* 输入框样式 */
+        .input-field {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        /* 错误提示样式 */
+        .error-message {
+            color: #ff4d4f; /* 红色错误提示 */
+            font-size: 14px;
+            height: 20px; /* 固定高度，避免布局跳动 */
+            margin: 5px 0;
+            text-align: left;
+        }
+
+        /* 链接样式（注册、忘记密码） */
+        .link-group {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+        }
+        .link-group a {
+            text-decoration: none;
+            color: #009688;
+            font-size: 14px;
+            transition: color 0.3s;
+        }
+        .link-group a:hover {
+            text-decoration: underline;
+            color: #00796b;
+        }
+
+        /* 登录按钮样式 */
+        .login-btn {
+            width: 100%;
+            padding: 12px;
+            background-color: #009688;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .login-btn:hover {
+            background-color: #00796b;
+        }
+
+        /* 其他登录方式 */
+        .other-login {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+        .other-login a {
+            text-decoration: none;
+            color: #009688;
+        }
+        .other-login a:hover {
+            text-decoration: underline;
+        }
+
+        /* 响应式适配 */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            .left-section,
+            .right-section {
+                width: 100%;
+            }
+            .left-section {
+                padding: 30px 20px;
+            }
+            .left-section img {
+                max-height: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 左侧：社区医疗图标 -->
+        <div class="left-section">
+            <img src="images/community_medical_icon.png" alt="社区医疗图标">
+        </div>
+
+        <!-- 右侧：登录界面 -->
+        <div class="right-section">
+            <h2>社区医疗系统登录</h2>
+            <!-- 顶部图标（可选） -->
+            <img src="images/login_page_icon.png" alt="登录页图标" style="width:80px; display:block; margin:0 auto 20px;">
+            
+            <!-- 账号输入框 -->
+            <input id="username" class="input-field" type="text" placeholder="请输入账号">
+            <!-- 密码输入框 -->
+            <input id="password" class="input-field" type="password" placeholder="输入密码">
+            <!-- 错误提示区域 -->
+            <div class="error-message" id="errorMsg"></div>
+            
+            <div class="link-group">
+                <!-- 注册账号链接，跳转到register.html -->
+                <a href="register.html">注册账号</a>
+                <!-- 忘记密码链接，跳转到forgot-password.html -->
+                <a href="forgot-password.html">忘记密码？</a>
+            </div>
+
+            <!-- 登录按钮（添加点击事件） -->
+            <button class="login-btn" onclick="checkLogin()">登录</button>
+
+            <div class="other-login">
+                <a href="#">其他登录方式|更多</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 登录验证函数
+        function checkLogin() {
+            // 获取输入的账号和密码
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const errorMsg = document.getElementById('errorMsg');
+
+            // 验证输入是否为空
+            if (username === "" || password === "") {
+                errorMsg.textContent = "请输入账号和密码";
+                return;
+            }
+
+            // 从localStorage获取注册的用户信息
+            const storedUsers = localStorage.getItem('registeredUsers');
+            if (!storedUsers) {
+                errorMsg.textContent = "该账号未注册，请先注册";
+                return;
+            }
+
+            // 解析用户数据
+            const users = JSON.parse(storedUsers);
+            
+            // 查找匹配的用户
+            const matchedUser = users.find(user => user.username === username);
+            
+            if (!matchedUser) {
+                errorMsg.textContent = "该账号未注册，请先注册";
+            } else if (matchedUser.password !== password) {
+                errorMsg.textContent = "密码错误，请重新输入";
+            } else {
+                // 登录成功，记录登录状态并跳转
+                localStorage.setItem('currentUser', JSON.stringify(matchedUser));
+                errorMsg.textContent = "";
+                window.location.href = "index.html";
+            }
+        }
+
+        // 支持按回车键登录
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                checkLogin(); // 按下回车键时执行登录验证
+            }
+        });
+    </script>
+</body>
+</html>
+    

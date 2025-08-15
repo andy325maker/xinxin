@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>心率</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, "PingFang SC", sans-serif;
+        }
+
+        /* 沉浸式标题栏 */
+        .nav-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 44px;
+            background: #ffffff;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+            z-index: 1000;
+        }
+
+        /* 返回按钮和首页按钮容器 */
+        .nav-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        /* 返回按钮 */
+        .back-arrow {
+            width: 24px;
+            height: 24px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%23333" d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"/></svg>');
+            background-size: contain;
+            border: none;
+            cursor: pointer;
+        }
+
+        /* 首页按钮 */
+        .home-btn {
+            padding: 5px 10px;
+            background-color: #f0f0f0;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            color: #333;
+            cursor: pointer;
+        }
+
+        .home-btn:hover {
+            background-color: #e0e0e0;
+        }
+
+        /* 居中标題 */
+        .nav-title {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 17px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        /* 内容区域 */
+        .content {
+            margin-top: 44px;
+            padding: 20px;
+            min-height: calc(100vh - 44px);
+            background: #f8f9fa;
+        }
+
+        /* 实时心率模块 */
+        .heart-rate-box, .chart-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .heart-rate-value {
+            font-size: 48px;
+            color: #e74c3c;
+            font-weight: 700;
+            margin: 10px 0;
+        }
+
+        /* 图表容器 */
+        .chart-body {
+            position: relative;
+            height: 200px;
+            margin-left: 30px;
+            border-left: 1px solid #eee;
+            border-bottom: 1px solid #eee;
+        }
+
+        /* 坐标轴样式 */
+        .y-axis {
+            position: absolute;
+            left: -30px;
+            top: 0;
+            bottom: 0;
+            width: 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+
+        .x-axis {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+
+        /* 日视图样式 */
+        .day-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 3px;
+            margin-top: 15px;
+        }
+
+        .hour-label {
+            text-align: center;
+            font-size: 10px;
+            color: #7f8c8d;
+            transform: rotate(-45deg);
+            padding: 2px;
+        }
+
+        .hour-bar-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .hour-bar {
+            background: #e74c3c;
+            width: 80%;
+            border-radius: 2px;
+            margin-top: 5px;
+            transition: height 0.3s ease;
+        }
+
+        /* 周/月视图布局 */
+        .week-grid, .month-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            margin-top: 15px;
+        }
+
+        .week-day, .month-day {
+            text-align: center;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+
+        .chart-title {
+            color: #2c3e50;
+            font-size: 16px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+    </style>
+</head>
+<body>
+    <!-- 标题栏 -->
+    <nav class="nav-bar">
+        <div class="nav-actions">
+            <button class="back-arrow" onclick="handleBack()"></button>
+            <button class="home-btn" onclick="goToHome()">首页</button>
+        </div>
+        <h1 class="nav-title">心率</h1>
+    </nav>
+
+    <!-- 内容区域 -->
+    <div class="content">
+        <!-- 实时心率模块 -->
+        <div class="heart-rate-box">
+            <h2>实时心率</h2>
+            <div class="heart-rate-value">92</div>
+            <div style="color: #95a5a6; font-size: 12px;">更新时间：今天 <?php echo date('H:i'); ?></div>
+        </div>
+
+        <!-- 历史数据分析 -->
+		<div class="chart-card">
+		    <div class="chart-title">本日心率</div>
+		    <div class="chart-body">
+		        <div class="y-axis">
+		            <span>240</span><span>210</span><span>180</span><span>150</span>
+		            <span>120</span><span>90</span><span>60</span><span>30</span><span>0</span>
+		        </div>
+                <!-- 动态生成心率柱状图 -->
+                <div style="display: flex; align-items: flex-end; height: 100%; padding: 0 10px;">
+                    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; margin: 0 5px;">
+                        <div class="hour-bar" style="height: 35%;"></div>
+                    </div>
+                    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; margin: 0 5px;">
+                        <div class="hour-bar" style="height: 45%;"></div>
+                    </div>
+                    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; margin: 0 5px;">
+                        <div class="hour-bar" style="height: 60%;"></div>
+                    </div>
+                    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; margin: 0 5px;">
+                        <div class="hour-bar" style="height: 55%;"></div>
+                    </div>
+                    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; margin: 0 5px;">
+                        <div class="hour-bar" style="height: 70%;"></div>
+                    </div>
+                    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; margin: 0 5px;">
+                        <div class="hour-bar" style="height: 65%;"></div>
+                    </div>
+                    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; margin: 0 5px;">
+                        <div class="hour-bar" style="height: 50%;"></div>
+                    </div>
+                </div>
+		    </div>
+		    <div class="day-grid">
+                <div class="hour-label">3:00</div>
+                <div class="hour-label">6:00</div>
+                <div class="hour-label">9:00</div>
+                <div class="hour-label">12:00</div>
+                <div class="hour-label">15:00</div>
+                <div class="hour-label">18:00</div>
+                <div class="hour-label">21:00</div>
+		    </div>
+		</div>
+		
+        <div class="chart-card">
+            <div class="chart-title">本周心率</div>
+            <div class="chart-body">
+                <div class="y-axis">
+                    <span>240</span><span>210</span><span>180</span><span>150</span>
+                    <span>120</span><span>90</span><span>60</span><span>30</span><span>0</span>
+                </div>
+                <div style="display: flex; align-items: flex-end; height: 100%; padding: 0 10px;">
+                    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; margin: 0 5px;">
+                        <div class="hour-bar" style="height: 40%;"></div>
+                    </div>
+                    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; margin: 0 5px;">
+                        <div class="hour-bar" style="height: 50%;"></div>
+                    </div>
+                    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; margin: 0 5px;">
+                        <div class="hour-bar" style="height: 55%;"></div>
+                    </div>
+                    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; margin: 0 5px;">
+                        <div class="hour-bar" style="height: 45%;"></div>
+                    </div>
+                    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; margin: 0 5px;">
+                        <div class="hour-bar" style="height: 60%;"></div>
+                    </div>
+                    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; margin: 0 5px;">
+                        <div class="hour-bar" style="height: 70%;"></div>
+                    </div>
+                    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; margin: 0 5px;">
+                        <div class="hour-bar" style="height: 45%;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="week-grid">
+                <div class="week-day">日</div>
+                <div class="week-day">一</div>
+                <div class="week-day">二</div>
+                <div class="week-day">三</div>
+                <div class="week-day">四</div>
+                <div class="week-day">五</div>
+                <div class="week-day">六</div>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-title">本月心率</div>
+            <div class="chart-body">
+                <div class="y-axis">
+                    <span>240</span><span>210</span><span>180</span><span>150</span>
+                    <span>120</span><span>90</span><span>60</span><span>30</span><span>0</span>
+                </div>
+                <div style="display: flex; align-items: flex-end; height: 100%; padding: 0 10px;">
+                    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; margin: 0 5px;">
+                        <div class="hour-bar" style="height: 50%;"></div>
+                    </div>
+                    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; margin: 0 5px;">
+                        <div class="hour-bar" style="height: 55%;"></div>
+                    </div>
+                    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; margin: 0 5px;">
+                        <div class="hour-bar" style="height: 60%;"></div>
+                    </div>
+                    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; margin: 0 5px;">
+                        <div class="hour-bar" style="height: 55%;"></div>
+                    </div>
+                    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; margin: 0 5px;">
+                        <div class="hour-bar" style="height: 50%;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="month-grid">
+                <div class="month-day">1日</div>
+                <div class="month-day">7日</div>
+                <div class="month-day">14日</div>
+                <div class="month-day">21日</div>
+                <div class="month-day">28日</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 返回按钮处理：有历史记录则返回，否则跳首页
+        function handleBack() {
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                window.location.href = "index.html";
+            }
+        }
+        
+        // 跳转到首页
+        function goToHome() {
+            window.location.href = "index.html";
+        }
+        
+        // 初始化月历
+        function generateMonthDays() {
+            // 可以添加动态生成日期的逻辑
+        }
+        generateMonthDays();
+    </script>
+</body>
+</html>

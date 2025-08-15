@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>血糖监测</title>
+    <style>
+        /* 全局样式 */
+        body {
+            font-family: Arial, sans-serif;
+            padding: 10px;
+            background: #f5f5f5;
+            margin: 0;
+        }
+
+        /* 顶部导航栏 */
+        .page-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 44px;
+            background: #ffffff;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            font-size: 20px;
+            font-weight: bold;
+            z-index: 1000;
+        }
+
+        /* 返回按钮样式（优化交互体验） */
+        .back-arrow {
+            width: 24px;
+            height: 24px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%23333" d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"/></svg>');
+            background-size: contain;
+            border: none;
+            cursor: pointer;
+            position: absolute;
+            left: 20px;
+            /* 扩大点击区域，提升移动端体验 */
+            padding: 8px;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+        .back-arrow:hover {
+            background-color: #f0f0f0; /*  hover时显示背景，增强可点击感 */
+        }
+        .back-arrow:active {
+            transform: scale(0.9); /* 点击时轻微缩小，提供反馈 */
+        }
+
+        .header-title {
+            flex: 1;
+            text-align: center;
+        }
+
+        /* 主容器 */
+        .container {
+            background: white;
+            border-radius: 15px;
+            margin-top: 70px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        /* 图表样式 */
+        .chart {
+            position: relative;
+            height: 250px;
+            margin: 20px 0;
+            border-left: 2px solid #999;
+            border-bottom: 2px solid #999;
+            background-image:
+                linear-gradient(to top, #eee 1px, transparent 1px),
+                linear-gradient(to top, #eee 1px, transparent 1px),
+                linear-gradient(to top, #eee 1px, transparent 1px),
+                linear-gradient(to top, #eee 1px, transparent 1px),
+                linear-gradient(to top, #eee 1px, transparent 1px),
+                linear-gradient(to top, #eee 1px, transparent 1px);
+            background-position:
+                bottom 0% left 0,
+                bottom 15% left 0,
+                bottom 35% left 0,
+                bottom 55% left 0,
+                bottom 75% left 0,
+                bottom 95% left 0;
+            background-repeat: no-repeat;
+            background-size: 100% 1px;
+        }
+
+        .today-label {
+            position: absolute;
+            top: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 20px;
+            color: #666;
+            background: rgba(255,255,255,0.9);
+            padding: 2px 10px;
+            border-radius: 4px;
+            z-index: 100;
+        }
+
+        .y-axis {
+            position: absolute;
+            left: -50px;
+            width: 50px;
+            top: 0;
+            bottom: 0;
+        }
+
+        .y-label {
+            position: absolute;
+            right: 5px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .unit-label {
+            position: absolute;
+            top: -20px;
+            left: 30px;
+            font-size: 12px;
+            color: #666;
+            font-style: italic;
+        }
+
+        .bars {
+            display: flex;
+            justify-content: space-between;
+            height: 100%;
+        }
+
+        .x-axis {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            padding: 0 15px;
+        }
+
+        /* 数据统计样式 */
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        .stat-item {
+            flex: 1;
+            padding: 10px;
+            background: #f8f8f8;
+            border-radius: 8px;
+            margin: 0 5px;
+        }
+
+        /* 当前血糖值 */
+        .current-value {
+            background: #fff;
+            border-radius: 16rpx;
+            padding: 30rpx;
+            margin-bottom: 30rpx;
+            text-align: center;
+        }
+
+        .value {
+            font-size: 72rpx;
+            color: #4CAF50;
+            font-weight: bold;
+            margin-right: 10rpx;
+        }
+
+        .unit {
+            font-size: 32rpx;
+            color: #666;
+        }
+
+        .time {
+            display: block;
+            color: #999;
+            font-size: 24rpx;
+            margin-top: 10rpx;
+        }
+
+        .label {
+            display: block;
+            color: #666;
+            font-size: 24rpx;
+            margin-bottom: 10rpx;
+        }
+
+        /* 图表容器 */
+        .chart-container {
+            position: relative;
+            height: 280px;
+            margin: 20px;
+            background: #f8f9fc;
+            border-radius: 12px;
+            overflow: visible;
+        }
+
+        .chart-title {
+            position: absolute;
+            left: 140px;
+            top: -50px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .chart-unit {
+            position: absolute;
+            right: 240px;
+            top: -30px;
+            color: #666;
+        }
+
+        /* 数据容器 */
+        .data-container {
+            padding: 0 20px;
+        }
+
+        .data-item {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .data-column {
+            flex: 1;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 8px;
+        }
+
+        .data-column .value {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .data-column .label {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .data-column .time {
+            color: #999;
+            font-size: 12px;
+            margin-top: 8px;
+        }
+
+        /* 导航栏 */
+        .nav-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 88rpx;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.08);
+            z-index: 1000;
+        }
+
+        .nav-title {
+            font-size: 36rpx;
+            color: #333;
+            font-weight: bold;
+        }
+
+        .back-btn {
+            position: absolute;
+            left: 30rpx;
+            font-size: 60rpx;
+            color: #666;
+            line-height: 60rpx;
+            transform: translateY(-4rpx);
+            padding: 0 20rpx;
+        }
+/* 内容区域 */
+        .content-container {
+            padding-top: 108rpx;
+            padding: 30rpx 20rpx;
+        }
+
+        /* 图表样式 */
+        .chart-area {
+            flex: 1;
+            position: relative;
+        }
+
+        .chart {
+            height: 400rpx;
+            border-left: 1rpx solid #eee;
+            border-bottom: 1rpx solid #eee;
+            position: relative;
+            box-sizing: border-box;
+        }
+
+        .grid-line {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 1rpx;
+            background: #eee;
+            transform: translateY(-50%);
+        }
+
+        .data-line {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2rpx;
+            background: #4CAF50;
+        }
+
+        .x-axis {
+            display: flex;
+            justify-content: space-between;
+            padding-left: 2%;
+            padding-right: 2%;
+            margin-top: 10rpx;
+            color: #666;
+            font-size: 24rpx;
+            width: 100%;
+            position: absolute;
+            bottom: -40rpx;
+            left: 0;
+        }
+
+        .x-axis text {
+            flex: 1;
+            text-align: center;
+            transform: translateX(-2%);
+        }
+
+        /* 数据汇总 */
+        .summary {
+            display: flex;
+            justify-content: space-between;
+            gap: 20rpx;
+        }
+
+        .item {
+            background: #fff;
+            border-radius: 16rpx;
+            padding: 20rpx;
+            flex: 1;
+            text-align: center;
+        }
+
+        .item .label {
+            display: block;
+            color: #666;
+            font-size: 24rpx;
+            margin-bottom: 10rpx;
+        }
+
+        .item .value {
+            font-size: 32rpx;
+            color: #333;
+            font-weight: bold;
+        }
+
+        .item .time {
+            font-size: 24rpx;
+            color: #999;
+            margin-top: 5rpx;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="page-header">
+        <!-- 左上角箭头按钮，绑定跳转首页功能 -->
+        <button class="back-arrow" onclick="goToHome()"></button>
+        <div class="header-title">血糖</div>
+    </div>
+
+    <div class="container">
+        <!-- 当前血糖值 -->
+        <div class="current-value">
+            <text class="value">4.4</text>
+            <text class="unit">mmol/L</text>
+            <text class="time">11-30 22:06</text>
+            <text class="label">今天</text>
+        </div>
+
+        <!-- 图表容器 -->
+        <div class="chart-container">
+            <div class="chart">
+                <div class="today-label">本周</div>
+                <div class="y-axis">
+                    <div class="unit-label">mmol/L</div>
+                    <div class="y-label" style="bottom: 0">0</div>
+                    <div class="y-label" style="bottom: 15%">3</div>
+                    <div class="y-label" style="bottom: 35%">6</div>
+                    <div class="y-label" style="bottom: 55%">9</div>
+                    <div class="y-label" style="bottom: 75%">12</div>
+                    <div class="y-label" style="bottom: 95%">15</div>
+                </div>
+                <div class="bars" id="chartBars"></div>
+            </div>
+            <div class="x-axis">
+                <span>日</span>
+                <span>一</span>
+                <span>二</span>
+                <span>三</span>
+                <span>四</span>
+                <span>五</span>
+                <span>六</span>
+            </div>
+        </div>
+
+        <!-- 数据展示 -->
+        <div class="data-container">
+            <div class="data-item">
+                <text>周最大血糖幅度 1.7mmol/L</text>
+            </div>
+            <div class="data-row">
+                <div class="data-column">
+                    <text class="value">6.1mmol/L</text>
+                    <text class="label">周最高血糖</text>
+                    <text class="time">11-30 22:06</text>
+                </div>
+                <div class="data-column">
+                    <text class="value">4.4mmol/L</text>
+                    <text class="label">周最低血糖</text>
+                    <text class="time">11-30 22:06</text>
+                </div>
+            </div>
+        </div>
+
+        <!-- 数据汇总 -->
+        <div class="summary">
+            <div class="item">
+                <text class="label">最大血糖波动幅度</text>
+                <text class="value">1.7mmol/L</text>
+            </div>
+            <div class="item">
+                <text class="label">最高血糖</text>
+                <text class="value">6.1mmol/L</text>
+                <text class="time">11-30 22:06</text>
+            </div>
+            <div class="item">
+                <text class="label">最低血糖</text>
+                <text class="value">4.4mmol/L</text>
+                <text class="time">11-30 22:06</text>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 完善的跳转首页功能
+        function goToHome() {
+            // 1. 定义首页正确路径（与系统中其他页面保持一致）
+            const homePage = "index.html";
+            
+            // 2. 检查是否已在首页，避免无效跳转
+            if (window.location.pathname.endsWith(homePage)) {
+                console.log("已在首页，无需跳转");
+                return;
+            }
+            
+            // 3. 尝试跳转并处理可能的错误
+            try {
+                // 打印跳转日志，便于调试
+                console.log(`从 ${window.location.pathname} 跳转到首页`);
+                window.location.href = homePage;
+            } catch (error) {
+                // 4. 跳转失败时提示用户
+                console.error("首页跳转失败:", error);
+                alert("无法返回首页，请检查页面文件是否存在。");
+            }
+        }
+        
+        // 绘制图表（补充图表数据，完善页面功能）
+        function drawChart() {
+            const chartBars = document.getElementById('chartBars');
+            // 模拟一周的血糖数据（单位：mmol/L）
+            const bloodSugarData = [5.2, 4.8, 5.5, 4.6, 5.0, 6.1, 4.4];
+            
+            bloodSugarData.forEach(value => {
+                // 将血糖值转换为图表高度（适配0-15mmol/L的范围）
+                const height = (value / 15) * 100;
+                const bar = document.createElement('div');
+                bar.style.width = '10%';
+                bar.style.height = `${height}%`;
+                bar.style.backgroundColor = '#4CAF50';
+                bar.style.borderRadius = '4px 4px 0 0';
+                bar.style.alignSelf = 'flex-end';
+                bar.style.transition = 'height 0.3s ease';
+                
+                // 鼠标悬停显示具体数值
+                bar.title = `${value} mmol/L`;
+                chartBars.appendChild(bar);
+            });
+            console.log("血糖图表绘制完成");
+        }
+
+        // 页面加载完成后执行
+        window.addEventListener('DOMContentLoaded', () => {
+            drawChart();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>绑定页面</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+        }
+        
+        body {
+            background-color: #fff;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            height: 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 15px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .back-button {
+            font-size: 24px;
+            color: #333;
+            cursor: pointer;
+            transition: color 0.2s;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+        
+        .back-button:hover {
+            color: #007bff;
+            background-color: #f0f7ff;
+        }
+        
+        .title {
+            font-size: 18px;
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .content {
+            flex: 1;
+            padding: 20px;
+        }
+        
+        .input-section, .device-section {
+            margin-bottom: 20px;
+        }
+        
+        .label {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 10px;
+            display: block;
+        }
+        
+        .input-box {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .device-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+        
+        .device-info {
+            display: flex;
+            align-items: center;
+        }
+        
+        .device-placeholder {
+            width: 80px;
+            height: 80px;
+            border: 1px dashed #ddd;
+            margin-right: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+        }
+        
+        .device-details {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .device-name {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .device-status {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .arrow {
+            font-size: 24px;
+            color: #999;
+        }
+        
+        .bind-button {
+            display: block;
+            width: 80%;
+            padding: 12px 0;
+            margin: 20px auto;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .bind-button:hover {
+            background-color: #0056b3;
+        }
+        
+        .logout-button {
+            display: block;
+            width: 80%;
+            padding: 12px 0;
+            margin: 10px auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 16px;
+            color: #333;
+            background-color: #fff;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .logout-button:hover {
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="back-button" onclick="goToHome()">&#8249;</div>
+        <div class="title">绑定</div>
+    </div>
+    
+    <div class="content">
+        <div class="input-section">
+            <label class="label">输入设备号</label>
+            <input type="text" class="input-box" placeholder="请输入设备号">
+            <button class="bind-button" onclick="bindDevice()">绑定设备</button>
+        </div>
+        
+        <div class="device-section">
+            <label class="label">已绑定设备</label>
+            <div class="device-item" onclick="viewDeviceDetails()">
+                <div class="device-info">
+                    <div class="device-placeholder">📱</div>
+                    <div class="device-details">
+                        <div class="device-name">血压监测仪</div>
+                        <div class="device-status">在线 · 上次同步: 今天 08:30</div>
+                    </div>
+                </div>
+                <div class="arrow">></div>
+            </div>
+        </div>
+    </div>
+    
+    <button class="logout-button" onclick="confirmLogout()">退出登录</button>
+
+    <script>
+        // 跳转到首页
+        function goToHome() {
+            const homePage = "index.html"; // 首页HTML文件名，根据实际情况修改
+            
+            // 检查是否已在首页
+            if (window.location.pathname.endsWith(homePage)) {
+                console.log("已在首页，无需跳转");
+                return;
+            }
+            
+            try {
+                console.log("从绑定页面跳转到首页");
+                window.location.href = homePage;
+            } catch (error) {
+                console.error("跳转至首页失败:", error);
+                alert("无法返回首页，请检查页面文件是否存在。");
+            }
+        }
+        
+        // 绑定设备
+        function bindDevice() {
+            const deviceId = document.querySelector('.input-box').value.trim();
+            if (!deviceId) {
+                alert('请输入设备号');
+                return;
+            }
+            alert(`设备 ${deviceId} 绑定成功！`);
+            document.querySelector('.input-box').value = '';
+            // 可以在这里添加刷新设备列表的逻辑
+        }
+        
+        // 查看设备详情
+        function viewDeviceDetails() {
+            alert('查看设备详情');
+            // 实际应用中可以跳转到设备详情页
+            // window.location.href = "device-details.html";
+        }
+        
+        // 确认退出登录
+        function confirmLogout() {
+            if(confirm('确定要退出登录吗？')) {
+                alert('退出登录成功');
+                // 实际应用中可以跳转到登录页
+                // window.location.href = "login.html";
+            }
+        }
+    </script>
+</body>
+</html>
+    

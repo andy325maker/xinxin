@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>与卫士聊天</title>
+    <style>
+        /* 基础样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+            background-color: #f5f5f5;
+            padding-top: constant(safe-area-inset-top);
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: 70px; /* 为输入区域预留空间 */
+            min-height: 100vh;
+        }
+
+        /* 顶部导航栏 */
+        .navbar {
+            background-color: white;
+            color: #333;
+            height: 56px;
+            width: 100%;
+            position: fixed;
+            top: constant(safe-area-inset-top);
+            top: env(safe-area-inset-top);
+            left: 0;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        /* 返回键样式 */
+        .back-button {
+            position: absolute;
+            left: 20px;
+            font-size: 28px;
+            cursor: pointer;
+            color: #333;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+
+        .back-button:active {
+            background-color: #f0f0f0;
+            transform: scale(0.9);
+        }
+
+        .navbar-title {
+            font-size: 18px;
+            font-weight: 500;
+        }
+
+        /* 聊天内容区域 */
+        .chat-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: calc(56px + 15px + constant(safe-area-inset-top)) 15px 15px;
+            padding: calc(56px + 15px + env(safe-area-inset-top)) 15px 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* 消息气泡样式 */
+        .message {
+            max-width: 70%;
+            padding: 10px 15px;
+            border-radius: 18px;
+            position: relative;
+            word-wrap: break-word;
+            line-height: 1.5;
+        }
+
+        /* 卫士消息 */
+        .guardian-message {
+            align-self: flex-start;
+            background-color: white;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        /* 用户消息 */
+        .user-message {
+            align-self: flex-end;
+            background-color: #3498db;
+            color: white;
+            box-shadow: 0 1px 3px rgba(52, 152, 219, 0.3);
+        }
+
+        /* 系统提醒消息 */
+        .system-message {
+            align-self: center;
+            background-color: #f8f9fa;
+            font-size: 14px;
+            color: #e74c3c;
+            max-width: 80%;
+            box-shadow: 0 1px 3px rgba(231, 76, 60, 0.2);
+        }
+
+        /* 消息时间 */
+        .message-time {
+            font-size: 12px;
+            color: #999;
+            margin-top: 4px;
+            text-align: right;
+        }
+
+        .guardian-message .message-time,
+        .system-message .message-time {
+            text-align: left;
+        }
+
+        /* 输入区域 */
+        .input-area {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: white;
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.08);
+            z-index: 999;
+        }
+
+        #message-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #eee;
+            border-radius: 25px;
+            font-size: 16px;
+            outline: none;
+            resize: none;
+            height: 46px;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+
+        #send-button {
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        #send-button:active {
+            transform: scale(0.95);
+            background-color: #2980b9;
+        }
+
+        /* 加载提示 */
+        .loading {
+            align-self: flex-start;
+            padding: 8px 12px;
+            background-color: white;
+            border-radius: 12px;
+            font-size: 14px;
+            color: #666;
+            display: none;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .loading-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #999;
+            margin: 0 2px;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+
+        .loading-dot:nth-child(1) { animation-delay: -0.32s; }
+        .loading-dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+
+        /* 设备状态提示 */
+        .device-status {
+            position: fixed;
+            top: 60px;
+            left: 0;
+            right: 0;
+            background-color: #e74c3c;
+            color: white;
+            padding: 8px 15px;
+            font-size: 14px;
+            text-align: center;
+            z-index: 990;
+            display: none;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-100%); }
+            to { transform: translateY(0); }
+        }
+    </style>
+    <!-- Cordova核心库 -->
+    <script src="cordova.js"></script>
+</head>
+<body>
+    <!-- 设备状态提示条 -->
+    <div class="device-status" id="deviceStatus"></div>
+
+    <!-- 顶部导航栏 -->
+    <div class="navbar">
+        <div class="back-button" onclick="goToMessages()">&lt;</div>
+        <div class="navbar-title">健康卫士</div>
+    </div>
+
+    <!-- 聊天内容区域 -->
+    <div class="chat-container" id="chatContainer">
+        <!-- 欢迎消息 -->
+        <div class="message guardian-message">
+            您好！我是您的健康卫士，有什么健康问题可以问我哦~ 我也会提醒您设备的状态。
+            <div class="message-time">刚刚</div>
+        </div>
+    </div>
+
+    <!-- 加载提示 -->
+    <div class="loading" id="loading">
+        正在输入<span class="loading-dot"></span>
+        <span class="loading-dot"></span>
+        <span class="loading-dot"></span>
+    </div>
+
+    <!-- 输入区域 -->
+    <div class="input-area">
+        <textarea id="message-input" placeholder="请输入消息..."></textarea>
+        <button id="send-button" onclick="sendMessage()">→</button>
+    </div>
+
+    <script>
+        // 聊天记录存储
+        let chatHistory = [];
+        // 设备就绪状态
+        let isDeviceReady = false;
+        // 设备状态
+        let deviceStatus = {
+            batteryLevel: 100,
+            connected: true,
+            lastChecked: new Date()
+        };
+        // 卫士回复内容库
+        const guardianResponses = {
+            "你好": "您好！很高兴为您服务，请问有什么健康问题需要咨询吗？",
+            "血压高怎么办": "血压偏高建议您：1. 减少盐分摄入；2. 保持规律运动；3. 避免情绪激动；4. 定期监测血压。如果持续偏高，请及时就医。",
+            "心率正常范围": "成年人正常静息心率一般在60-100次/分钟，运动员等特殊人群可能会偏低一些，属于正常现象。",
+            "血糖高": "血糖偏高建议控制碳水化合物摄入，增加运动量，定期监测血糖变化。如果持续偏高，请咨询医生是否需要药物干预。",
+            "健康建议": "保持健康的生活方式包括：均衡饮食、规律作息、适度运动、戒烟限酒、保持良好心态。定期进行健康检查也很重要。",
+            "设备状态": `当前设备状态：电量 ${deviceStatus.batteryLevel}%，${deviceStatus.connected ? '已连接' : '未连接'}`,
+            "电池电量": `设备当前电量为 ${deviceStatus.batteryLevel}%，${deviceStatus.batteryLevel < 20 ? '电量偏低，请及时充电' : '电量充足'}`,
+            "默认": "很抱歉，我不太理解您的问题。您可以问我关于血压、心率、血糖等健康相关的问题，或者询问设备状态，我会尽力为您解答。"
+        };
+
+        // Cordova设备就绪事件
+        document.addEventListener('deviceready', onDeviceReady, false);
+        
+        // 页面加载事件（用于浏览器测试）
+        window.addEventListener('load', function() {
+            if (typeof cordova === 'undefined') {
+                console.log('非Cordova环境，模拟设备就绪');
+                onDeviceReady();
+            }
+        });
+
+        // 设备就绪处理
+        function onDeviceReady() {
+            console.log('设备已就绪');
+            isDeviceReady = true;
+            // 加载历史聊天记录
+            loadChatHistory();
+            // 设置物理返回键处理
+            setupBackButtonHandler();
+            // 输入框回车发送消息
+            document.getElementById('message-input').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+            
+            // 初始化设备状态监测
+            initDeviceMonitoring();
+        }
+
+        // 初始化设备状态监测
+        function initDeviceMonitoring() {
+            // 模拟设备状态更新（实际环境中应连接真实设备API）
+            setInterval(updateDeviceStatus, 30000); // 每30秒更新一次
+            
+            // 初始检查设备状态
+            setTimeout(updateDeviceStatus, 2000);
+        }
+
+        // 更新设备状态
+        function updateDeviceStatus() {
+            // 模拟设备状态变化（实际应用中应从真实设备获取）
+            const prevBatteryLevel = deviceStatus.batteryLevel;
+            
+            // 随机减少电量（1-5%）
+            deviceStatus.batteryLevel = Math.max(0, deviceStatus.batteryLevel - Math.floor(Math.random() * 5) + 1);
+            // 随机模拟连接状态变化（95%概率保持连接）
+            deviceStatus.connected = Math.random() > 0.05;
+            deviceStatus.lastChecked = new Date();
+            
+            // 更新回复内容库中的设备状态信息
+            guardianResponses["设备状态"] = `当前设备状态：电量 ${deviceStatus.batteryLevel}%，${deviceStatus.connected ? '已连接' : '未连接'}`;
+            guardianResponses["电池电量"] = `设备当前电量为 ${deviceStatus.batteryLevel}%，${deviceStatus.batteryLevel < 20 ? '电量偏低，请及时充电' : '电量充足'}`;
+            
+            // 检查是否需要发送提醒
+            if (!deviceStatus.connected) {
+                showDeviceAlert("设备已断开连接，请检查设备状态");
+            } else if (deviceStatus.batteryLevel <= 20 && prevBatteryLevel > 20) {
+                showDeviceAlert(`设备电量低（${deviceStatus.batteryLevel}%），请及时充电`);
+            } else if (deviceStatus.batteryLevel <= 5 && prevBatteryLevel > 5) {
+                showDeviceAlert(`设备电量极低（${deviceStatus.batteryLevel}%），即将关机`);
+            }
+            
+            console.log(`设备状态更新：电量 ${deviceStatus.batteryLevel}%，连接状态 ${deviceStatus.connected ? '正常' : '断开'}`);
+        }
+
+        // 显示设备状态提醒
+        function showDeviceAlert(message) {
+            // 显示顶部提示条
+            const statusBar = document.getElementById('deviceStatus');
+            statusBar.textContent = message;
+            statusBar.style.display = 'block';
+            
+            // 3秒后隐藏提示条
+            setTimeout(() => {
+                statusBar.style.display = 'none';
+            }, 3000);
+            
+            // 同时在聊天窗口中添加系统消息
+            const now = new Date();
+            const timeString = now.getHours().toString().padStart(2, '0') + ':' + 
+                             now.getMinutes().toString().padStart(2, '0');
+            
+            addMessageToUI(message, 'system', timeString);
+            
+            // 保存到聊天历史
+            chatHistory.push({
+                content: message,
+                sender: 'system',
+                time: timeString
+            });
+            saveChatHistory();
+        }
+
+        // 发送消息
+        function sendMessage() {
+            const input = document.getElementById('message-input');
+            const message = input.value.trim();
+            
+            if (!message) return; // 空消息不发送
+            
+            // 获取当前时间
+            const now = new Date();
+            const timeString = now.getHours().toString().padStart(2, '0') + ':' + 
+                             now.getMinutes().toString().padStart(2, '0');
+            
+            // 添加用户消息到聊天容器
+            addMessageToUI(message, 'user', timeString);
+            
+            // 保存到聊天历史
+            chatHistory.push({
+                content: message,
+                sender: 'user',
+                time: timeString
+            });
+            saveChatHistory();
+            
+            // 清空输入框
+            input.value = '';
+            
+            // 显示加载状态并触发卫士回复
+            showLoading(true);
+            setTimeout(() => {
+                generateGuardianResponse(message, timeString);
+            }, 1000);
+        }
+
+        // 生成卫士回复
+        function generateGuardianResponse(userMessage, userTime) {
+            // 简单匹配回复
+            let response = guardianResponses["默认"];
+            
+            // 关键词匹配
+            for (const key in guardianResponses) {
+                if (key !== "默认" && userMessage.includes(key)) {
+                    response = guardianResponses[key];
+                    break;
+                }
+            }
+            
+            // 获取回复时间（稍微晚于用户发送时间）
+            const now = new Date();
+            now.setMinutes(now.getMinutes() + 1); // 模拟延迟1分钟内
+            const timeString = now.getHours().toString().padStart(2, '0') + ':' + 
+                             now.getMinutes().toString().padStart(2, '0');
+            
+            // 添加卫士回复到聊天容器
+            addMessageToUI(response, 'guardian', timeString);
+            
+            // 保存到聊天历史
+            chatHistory.push({
+                content: response,
+                sender: 'guardian',
+                time: timeString
+            });
+            saveChatHistory();
+            
+            // 隐藏加载状态
+            showLoading(false);
+        }
+
+        // 添加消息到界面
+        function addMessageToUI(content, sender, time) {
+            const chatContainer = document.getElementById('chatContainer');
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}-message`;
+            messageDiv.innerHTML = `
+                ${content}
+                <div class="message-time">${time}</div>
+            `;
+            
+            chatContainer.appendChild(messageDiv);
+            
+            // 滚动到底部
+            scrollToBottom();
+        }
+
+        // 滚动到最新消息
+        function scrollToBottom() {
+            window.scrollTo({
+                top: document.body.scrollHeight,
+                behavior: 'smooth'
+            });
+        }
+
+        // 显示/隐藏加载状态
+        function showLoading(show) {
+            const loading = document.getElementById('loading');
+            loading.classList.toggle('active', show);
+            if (show) scrollToBottom();
+        }
+
+        // 保存聊天历史到本地存储
+        function saveChatHistory() {
+            localStorage.setItem('guardianChatHistory', JSON.stringify(chatHistory));
+        }
+
+        // 加载聊天历史
+        function loadChatHistory() {
+            const saved = localStorage.getItem('guardianChatHistory');
+            if (saved) {
+                chatHistory = JSON.parse(saved);
+                // 清空当前聊天容器
+                document.getElementById('chatContainer').innerHTML = '';
+                // 重新添加所有历史消息
+                chatHistory.forEach(msg => {
+                    addMessageToUI(msg.content, msg.sender, msg.time);
+                });
+            }
+        }
+
+        // 返回消息列表页面
+        function goToMessages() {
+            if (!isDeviceReady) {
+                showAlert('设备未就绪，请稍候');
+                return;
+            }
+            
+            const messagesPage = "message.html";
+            
+            try {
+                console.log(`返回消息页面: ${messagesPage}`);
+                window.location.href = messagesPage;
+            } catch (error) {
+                console.error("跳转失败:", error);
+                showAlert('无法返回消息页面，请重试');
+            }
+        }
+
+        // 处理Android物理返回键
+        function setupBackButtonHandler() {
+            if (typeof cordova !== 'undefined') {
+                document.addEventListener('backbutton', function(e) {
+                    e.preventDefault();
+                    goToMessages();
+                }, false);
+            }
+        }
+
+        // 统一的提示框
+        function showAlert(message) {
+            if (typeof navigator.notification !== 'undefined') {
+                navigator.notification.alert(
+                    message,
+                    null,
+                    '提示',
+                    '确定'
+                );
+            } else {
+                alert(message);
+            }
+        }
+    </script>
+</body>
+</html>
+    

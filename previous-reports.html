@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>往期报告</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+            padding-top: 60px; /* 为固定导航栏留出空间 */
+        }
+        /* 顶部导航栏样式 */
+        .navbar {
+            background-color: #fff;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: fixed; /* 固定在顶部 */
+            top: 0;
+            left: 0;
+            right: 0;
+            border-bottom: 1px solid #ddd;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+        .navbar h1 {
+            color: #333;
+            margin: 0;
+            font-size: 24px;
+            text-align: center;
+        }
+        /* 返回键样式（优化交互） */
+        .back-button {
+            position: absolute;
+            left: 20px;
+            color: #333;
+            font-size: 24px;
+            text-decoration: none;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%; /* 扩大点击区域 */
+            transition: all 0.2s;
+        }
+        .back-button:hover {
+            color: #007bff;
+            background-color: #f0f7ff;
+        }
+        .back-button:active {
+            transform: scale(0.9); /* 点击反馈 */
+        }
+        /* 内容区域样式 */
+        .content {
+            padding: 20px;
+            margin-top: 10px;
+        }
+        .report {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 8px;
+            border: 1px solid #eee;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        .report:hover {
+            background-color: #f5f5f5;
+            transform: translateY(-1px);
+        }
+        .report h2 {
+            font-size: 18px;
+            margin: 0;
+            flex-grow: 1;
+            color: #333;
+        }
+        .report-arrow {
+            color: #999;
+            font-size: 20px;
+            cursor: pointer;
+            transition: color 0.2s;
+            padding: 5px;
+        }
+        .report:hover .report-arrow {
+            color: #007bff; /* hover时箭头变色 */
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <div class="navbar">
+        <!-- 左上角箭头：跳转到首页 -->
+        <div class="back-button" onclick="goToHome()">&lt;</div>
+        <h1>往期报告</h1>
+    </div>
+    <!-- 内容区域 -->
+    <div class="content">
+        <div class="report">
+            <h2>11 月 29 日报告</h2>
+            <span class="report-arrow" onclick="goToUploadPage('2023-11-29')">→</span>
+        </div>
+        <div class="report">
+            <h2>11 月 30 日报告</h2>
+            <span class="report-arrow" onclick="goToUploadPage('2023-11-30')">→</span>
+        </div>
+        <div class="report">
+            <h2>12 月 1 日报告</h2>
+            <span class="report-arrow" onclick="goToUploadPage('2023-12-01')">→</span>
+        </div>
+        <div class="report">
+            <h2>12 月 2 日报告</h2>
+            <span class="report-arrow" onclick="goToUploadPage('2023-12-02')">→</span>
+        </div>
+        <div class="report">
+            <h2>12 月 3 日报告</h2>
+            <span class="report-arrow" onclick="goToUploadPage('2023-12-03')">→</span>
+        </div>
+        <div class="report">
+            <h2>12 月 4 日报告</h2>
+            <span class="report-arrow" onclick="goToUploadPage('2023-12-04')">→</span>
+        </div>
+        <div class="report">
+            <h2>12 月 5 日报告</h2>
+            <span class="report-arrow" onclick="goToUploadPage('2023-12-05')">→</span>
+        </div>
+        <div class="report">
+            <h2>12 月 6 日报告</h2>
+            <span class="report-arrow" onclick="goToUploadPage('2023-12-06')">→</span>
+        </div>
+        <div class="report">
+            <h2>12 月 7 日报告</h2>
+            <span class="report-arrow" onclick="goToUploadPage('2023-12-07')">→</span>
+        </div>
+        <div class="report">
+            <h2>12 月 8 日报告</h2>
+            <span class="report-arrow" onclick="goToUploadPage('2023-12-08')">→</span>
+        </div>
+        <div class="report">
+            <h2>12 月 9 日报告</h2>
+            <span class="report-arrow" onclick="goToUploadPage('2023-12-09')">→</span>
+        </div>
+        <div class="report">
+            <h2>12 月 10 日报告</h2>
+            <span class="report-arrow" onclick="goToUploadPage('2023-12-10')">→</span>
+        </div>
+        <div class="report">
+            <h2>12 月 11 日报告</h2>
+            <span class="report-arrow" onclick="goToUploadPage('2023-12-11')">→</span>
+        </div>
+        <div class="report">
+            <h2>12 月 12 日报告</h2>
+            <span class="report-arrow" onclick="goToUploadPage('2023-12-12')">→</span>
+        </div>
+    </div>
+
+    <script>
+        // 左上角箭头：跳转到首页
+        function goToHome() {
+            const homePage = "index.html";
+            
+            if (window.location.pathname.endsWith(homePage)) {
+                console.log("已在首页，无需跳转");
+                return;
+            }
+            
+            try {
+                console.log(`从往期报告页面跳转到首页`);
+                window.location.href = homePage;
+            } catch (error) {
+                console.error("首页跳转失败:", error);
+                alert("无法返回首页，请检查页面文件是否存在。");
+            }
+        }
+        
+        // 右侧箭头：跳转到上传界面（传递日期参数）
+        function goToUploadPage(date) {
+            // 上传界面路径，根据实际文件名设置为shangchuan.html
+            const uploadUrl = `shangchuan.html?date=${date}`;
+            
+            try {
+                console.log(`跳转到 ${date} 的报告上传界面`);
+                window.location.href = uploadUrl;
+            } catch (error) {
+                console.error("上传界面跳转失败:", error);
+                alert(`无法打开上传界面，请检查页面文件是否存在。`);
+            }
+        }
+    </script>
+</body>
+</html>

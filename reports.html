@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AGP 图谱生成器</title>
+    <!-- 引入 ECharts -->
+    <script src="https://cdn.bootcdn.net/ajax/libs/echarts/5.4.2/echarts.min.js"></script>
+    <style>
+        /* 顶部导航栏样式 */
+        .navbar {
+            background-color: white;
+            color: #333;
+            padding: 15px 0;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            width: 100%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        /* 返回键样式 */
+        .back-button {
+            position: absolute;
+            left: 20px;
+            font-size: 28px;
+            cursor: pointer;
+            color: #333;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+        
+        .back-button:active {
+            background-color: #f0f0f0;
+            transform: scale(0.9);
+        }
+        .container {
+            max-width: 800px;
+            margin: 100px auto 20px;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+        .upload-box {
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+        #chart {
+            width: 100%;
+            height: 500px;
+            margin-top: 20px;
+        }
+        .upload-label {
+            font-size: 18px;
+            color: #666;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        /* 修改按钮样式 */
+        button {
+            background: white;
+            color: #333;
+            padding: 10px 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s, color 0.3s;
+        }
+        /* 鼠标悬停效果 */
+        button:hover {
+            background: #f0f0f0;
+            color: #000;
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <div class="navbar">
+        <!-- 返回键 -->
+        <div class="back-button" onclick="goToHome()">&lt;</div>
+        AGP 图谱
+    </div>
+    <!-- 内容区域 -->
+    <div class="container">
+        <div class="upload-box" onclick="document.getElementById('fileInput').click()">
+            <p class="upload-label">点击选择文件或拖拽文件到此区域</p>
+            <button>选择要上传的文件</button>
+        </div>
+        <input type="file" id="fileInput" accept=".csv,.json">
+        <div id="chart"></div>
+    </div>
+    <script>
+        // 初始化 ECharts 实例
+        const myChart = echarts.init(document.getElementById('chart'));
+        
+        // 跳转到首页 - 优化版
+        function goToHome() {
+            const homePage = "index.html"; // 首页文件名，与健康监测系统保持一致
+            
+            // 检查是否已在首页，避免无效跳转
+            if (window.location.pathname.endsWith(homePage)) {
+                console.log("已在首页，无需跳转");
+                return;
+            }
+            
+            try {
+                console.log(`从AGP图谱页面跳转到首页: ${homePage}`);
+                
+                // 适配Cordova APP环境
+                if (typeof cordova !== 'undefined') {
+                    window.location.href = homePage;
+                } else {
+                    // 浏览器环境
+                    window.location.href = homePage;
+                }
+            } catch (error) {
+                console.error("跳转失败:", error);
+                // 错误提示，适配APP环境
+                if (typeof navigator.notification !== 'undefined') {
+                    navigator.notification.alert(
+                        '无法返回首页，请检查页面文件是否存在',
+                        null,
+                        '导航错误',
+                        '确定'
+                    );
+                } else {
+                    alert('无法返回首页，请检查页面文件是否存在');
+                }
+            }
+        }
+        
+        // 文件选择事件监听
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const content = event.target.result;
+                    // 解析文件内容
+                    const data = parseFile(content, file.name);
+                    // 更新图表数据
+                    if (data) {
+                        updateChart(data);
+                    }
+                };
+                reader.readAsText(file);
+                alert('文件已上传: ' + file.name);
+            }
+        });
+        
+        // 解析文件（支持CSV和JSON）
+        function parseFile(content, fileName) {
+            try {
+                if (fileName.endsWith('.json')) {
+                    return JSON.parse(content);
+                } else if (fileName.endsWith('.csv')) {
+                    return parseCSV(content);
+                }
+            } catch (error) {
+                alert('文件解析错误: ' + error.message);
+                return null;
+            }
+        }
+        
+        // 解析 CSV 文件
+        function parseCSV(content) {
+            const lines = content.split('\n').filter(line => line.trim() !== '');
+            const data = lines.map(line => {
+                const parts = line.split(',');
+                return [parts[0], parseFloat(parts[1])];
+            });
+            return data;
+        }
+        
+        // 更新图表
+        function updateChart(data) {
+            const xAxisData = data.map(row => row[0]);
+            const seriesData = data.map(row => row[1]);
+            
+            myChart.setOption({
+                title: {
+                    text: 'AGP 图谱'
+                },
+                tooltip: {},
+                xAxis: {
+                    data: xAxisData
+                },
+                yAxis: {},
+                series: [{
+                    name: '数据',
+                    type: 'bar',
+                    data: seriesData
+                }]
+            });
+        }
+        
+        // Cordova设备就绪事件，处理物理返回键
+        document.addEventListener('deviceready', function() {
+            console.log('Cordova设备已就绪');
+            // 监听Android物理返回键
+            document.addEventListener('backbutton', function(e) {
+                e.preventDefault();
+                goToHome(); // 按返回键也跳转到首页
+            }, false);
+        }, false);
+    </script>
+</body>
+</html>
+    

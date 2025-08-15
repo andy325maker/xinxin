@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>家属聊天</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f5f5;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* 避免页面整体滚动 */
+        }
+        
+        .header {
+            background-color: #fff;
+            height: 44px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 15px;
+            border-bottom: 1px solid #eee;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            position: relative; /* 确保返回按钮层级正确 */
+            z-index: 10;
+        }
+        
+        /* 返回按钮优化 */
+        .back-button {
+            font-size: 24px;
+            color: #333;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+        
+        .back-button:hover {
+            background-color: #f0f0f0;
+            color: #007bff;
+        }
+        
+        .back-button:active {
+            transform: scale(0.9);
+        }
+        
+        .title {
+            font-size: 18px;
+            font-weight: 500;
+            color: #333;
+        }
+        
+        /* 菜单按钮优化 */
+        .menu-button {
+            font-size: 24px;
+            color: #333;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s;
+            position: relative;
+            z-index: 20;
+        }
+        
+        .menu-button:hover {
+            background-color: #f0f0f0;
+            color: #007bff;
+        }
+        
+        .menu-button:active {
+            transform: scale(0.9);
+        }
+        
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            background-color: #fff;
+        }
+        
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: flex-end;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .message-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: #999;
+            margin-right: 10px;
+            background-image: url('21853f2fc2bd4455ad3e701a497533e.jpg'); /* 家属头像 */
+            background-size: cover;
+            background-position: center;
+        }
+        
+        .message-bubble {
+            max-width: 70%;
+            padding: 10px 15px;
+            border-radius: 8px;
+            position: relative;
+            line-height: 1.5;
+        }
+        
+        .message-bubble-outgoing {
+            background-color: #2196F3;
+            color: white;
+            margin-right: 15px;
+        }
+        
+        .message-bubble-incoming {
+            background-color: #f1f1f1;
+            color: #333;
+            margin-left: 15px;
+        }
+        
+        .input-container {
+            display: flex;
+            height: 50px;
+            padding: 8px 15px;
+            background-color: #f5f5f5;
+            border-top: 1px solid #ddd;
+        }
+        
+        .input-box {
+            flex: 1;
+            height: 100%;
+            border-radius: 20px;
+            padding: 0 15px;
+            border: 1px solid #ddd;
+            background-color: #fff;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        
+        .input-box:focus {
+            border-color: #2196F3;
+        }
+        
+        .input-buttons {
+            display: flex;
+            align-items: center;
+            margin-left: 10px;
+        }
+        
+        .input-button {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: #f1f1f1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-left: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .input-button:hover {
+            background-color: #e0e0e0;
+        }
+        
+        .voice-input {
+            background-color: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            padding: 8px 15px;
+            margin-right: 10px;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .voice-input:hover {
+            background-color: #e9e9e9;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <!-- 返回键：返回消息列表页面 -->
+        <div class="back-button" onclick="goToMessagePage()">&#8249;</div>
+        <div class="title">家属</div>
+        <!-- 菜单按钮：跳转到聊天详情页面 -->
+        <div class="menu-button" onclick="goToChatDetail()">&#8801;</div>
+    </div>
+    
+    <div class="chat-container">
+        <div class="message">
+            <div class="message-avatar"></div>
+            <div class="message-bubble message-bubble-incoming">
+                今晚回家吃饭吗？
+            </div>
+        </div>
+        
+        <div class="message" style="justify-content: flex-end;">
+            <div class="message-bubble message-bubble-outgoing">
+                可能晚点，要加班
+            </div>
+            <div class="message-avatar" style="background-image: url('cd2ca9fa6a5937f3466cec481f631aa.jpg');"></div>
+        </div>
+        
+        <div class="message">
+            <div class="message-avatar"></div>
+            <div class="message-bubble message-bubble-incoming">
+                记得按时吃药，别太累了
+            </div>
+        </div>
+    </div>
+    
+    <div class="input-container">
+        <div class="voice-input">按住 说话</div>
+        <input type="text" class="input-box" placeholder="输入消息">
+        <div class="input-buttons">
+            <div class="input-button">😊</div>
+            <div class="input-button">+</div>
+        </div>
+    </div>
+
+    <script>
+        // 返回消息页面
+        function goToMessagePage() {
+            const messagePage = "message.html";
+            
+            if (window.location.pathname.endsWith(messagePage)) {
+                console.log("已在消息页面，无需跳转");
+                return;
+            }
+            
+            try {
+                console.log(`从家属聊天页面跳转到消息页面`);
+                window.location.href = messagePage;
+            } catch (error) {
+                console.error("跳转消息页面失败:", error);
+                alert("无法返回消息页面，请检查页面文件是否存在。");
+            }
+        }
+        
+        // 新增：跳转到聊天详情页面
+        function goToChatDetail() {
+            // 聊天详情页面路径
+            const chatDetailPage = "liaotianxiangqing.html";
+            
+            // 检查是否已在详情页面，避免无效跳转
+            if (window.location.pathname.endsWith(chatDetailPage)) {
+                console.log("已在聊天详情页面，无需跳转");
+                return;
+            }
+            
+            // 尝试跳转并处理可能的错误
+            try {
+                console.log(`从家属聊天页面跳转到聊天详情页面`);
+                window.location.href = chatDetailPage;
+            } catch (error) {
+                console.error("跳转聊天详情页面失败:", error);
+                alert("无法打开聊天详情，请检查页面文件是否存在。");
+            }
+        }
+        
+        // 聊天功能实现
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputBox = document.querySelector('.input-box');
+            const chatContainer = document.querySelector('.chat-container');
+            const voiceInput = document.querySelector('.voice-input');
+            
+            // 文本消息发送
+            inputBox.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && inputBox.value.trim() !== '') {
+                    sendMessage(inputBox.value.trim());
+                    inputBox.value = '';
+                }
+            });
+            
+            // 语音输入模拟
+            voiceInput.addEventListener('mousedown', function() {
+                this.textContent = '松开 发送';
+                this.style.backgroundColor = '#e0e0e0';
+            });
+            
+            voiceInput.addEventListener('mouseup', function() {
+                this.textContent = '按住 说话';
+                this.style.backgroundColor = '#f5f5f5';
+                // 模拟语音消息
+                setTimeout(() => {
+                    sendMessage('[语音消息]', true);
+                }, 300);
+            });
+            
+            voiceInput.addEventListener('mouseleave', function() {
+                this.textContent = '按住 说话';
+                this.style.backgroundColor = '#f5f5f5';
+            });
+            
+            // 发送消息函数
+            function sendMessage(text, isVoice = false) {
+                // 添加发送的消息
+                const message = document.createElement('div');
+                message.className = 'message';
+                message.style.justifyContent = 'flex-end';
+                message.innerHTML = `
+                    <div class="message-bubble message-bubble-outgoing">
+                        ${text}
+                    </div>
+                    <div class="message-avatar" style="background-image: url('cd2ca9fa6a5937f3466cec481f631aa.jpg');"></div>
+                `;
+                chatContainer.appendChild(message);
+                scrollToBottom();
+                
+                // 模拟回复
+                if (!isVoice) {
+                    setTimeout(() => {
+                        const replies = [
+                            "好的，知道了",
+                            "嗯嗯，收到",
+                            "我明白了",
+                            "稍后回复你",
+                            "没问题"
+                        ];
+                        const randomReply = replies[Math.floor(Math.random() * replies.length)];
+                        
+                        const replyMessage = document.createElement('div');
+                        replyMessage.className = 'message';
+                        replyMessage.innerHTML = `
+                            <div class="message-avatar"></div>
+                            <div class="message-bubble message-bubble-incoming">
+                                ${randomReply}
+                            </div>
+                        `;
+                        chatContainer.appendChild(replyMessage);
+                        scrollToBottom();
+                    }, 1000);
+                }
+            }
+            
+            // 滚动到底部
+            function scrollToBottom() {
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
+        });
+    </script>
+</body>
+</html>

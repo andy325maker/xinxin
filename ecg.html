@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>心电图</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            padding-top: 60px; /* 为顶部导航栏留出空间 */
+        }
+        /* 顶部导航栏样式 */
+        .navbar {
+            background-color: white;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+        /* 左上角返回箭头按钮（重点优化样式） */
+        .back-btn {
+            background: none;
+            border: none;
+            color: black;
+            font-size: 24px;
+            cursor: pointer;
+            position: absolute;
+            left: 20px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%; /* 圆形点击区域，扩大可点击范围 */
+            transition: all 0.2s; /* 平滑过渡效果 */
+        }
+        .back-btn:hover {
+            color: #007bff; /* hover时变色，提示可点击 */
+            background-color: #f0f7ff; /* 背景色变化增强反馈 */
+        }
+        .back-btn:active {
+            transform: scale(0.9); /* 点击时轻微缩小，增强触感反馈 */
+        }
+        .navbar span {
+            font-size: 20px;
+            font-weight: bold;
+            color: black;
+        }
+        /* 上传容器样式 */
+        .upload-container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            margin: 20px auto;
+            width: 90%;
+            max-width: 500px;
+        }
+        .upload-container h1 {
+            margin-bottom: 20px;
+            font-size: 24px;
+            color: #333;
+        }
+        .upload-container input[type="file"] {
+            display: none;
+        }
+        .upload-container label {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.2s;
+        }
+        .upload-container label:hover {
+            background-color: #0056b3;
+        }
+        
+        /* 已上传文件显示区域 */
+        .uploaded-files {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            background-color: #f9f9f9;
+        }
+        
+        .file-info {
+            flex: 1;
+            text-align: left;
+        }
+        
+        .file-name {
+            font-weight: bold;
+            margin-bottom: 3px;
+        }
+        
+        .file-size {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .file-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .file-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #666;
+            transition: color 0.2s;
+        }
+        
+        .file-button.view:hover {
+            color: #007bff;
+        }
+        
+        .file-button.delete:hover {
+            color: #ff4444;
+        }
+        
+        /* 确认上传按钮 */
+        .confirm-button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.2s;
+        }
+        
+        .confirm-button:hover {
+            background-color: #218838;
+        }
+        
+        .confirm-button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        
+        /* 箭头样式 */
+        .arrow-icon {
+            font-size: 24px;
+            cursor: pointer;
+            color: #007bff;
+            margin-top: 20px;
+            transition: transform 0.2s;
+        }
+        
+        .arrow-icon:hover {
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <div class="navbar">
+        <!-- 左上角箭头按钮（绑定跳转首页功能） -->
+        <button class="back-btn" onclick="goToHome()">&lt;</button>
+        <span>心电图</span>
+    </div>
+    <!-- 上传文件区域 -->
+    <div class="upload-container">
+        <h1>心电图</h1>
+        <input type="file" id="file-upload" accept="image/*, .pdf">
+        <label for="file-upload">选择要上传的文件</label>
+        
+        <div class="uploaded-files" id="uploadedFiles">
+            <!-- 已上传文件将显示在这里 -->
+        </div>
+        
+        <button class="confirm-button" id="confirmButton" disabled>确认上传</button>
+        
+        <!-- 保留其他跳转入口（可选） -->
+        <div class="arrow-icon" onclick="goToHome()">返回首页 →</div>
+    </div>
+
+    <script>
+        // 核心：跳转到首页功能（完善逻辑）
+        function goToHome() {
+            // 1. 定义首页正确路径（与实际首页文件名一致）
+            const homePage = "index.html";
+            
+            // 2. 检查当前是否已在首页（避免无效跳转）
+            if (window.location.pathname.endsWith(homePage)) {
+                console.log("已在首页，无需跳转");
+                return;
+            }
+            
+            // 3. 尝试跳转并处理可能的错误
+            try {
+                // 记录跳转前的页面，用于调试
+                console.log(`从 ${window.location.pathname} 跳转到 ${homePage}`);
+                window.location.href = homePage;
+            } catch (error) {
+                // 4. 跳转失败时给出用户提示
+                console.error("跳转失败:", error);
+                alert("无法跳转到首页，请检查页面文件是否存在。");
+            }
+        }
+        
+        // 文件上传处理（保持原有功能）
+        const fileInput = document.getElementById('file-upload');
+        const uploadedFiles = document.getElementById('uploadedFiles');
+        const confirmButton = document.getElementById('confirmButton');
+        
+        fileInput.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                const fileSize = (file.size / (1024 * 1024)).toFixed(2);
+                
+                fileItem.innerHTML = `
+                    <div class="file-info">
+                        <div class="file-name">${file.name}</div>
+                        <div class="file-size">${fileSize} MB</div>
+                    </div>
+                    <div class="file-actions">
+                        <button class="file-button delete" onclick="this.parentElement.parentElement.remove(); checkFiles()">删除</button>
+                    </div>
+                `;
+                
+                uploadedFiles.appendChild(fileItem);
+                checkFiles();
+                fileInput.value = '';
+            }
+        });
+        
+        function checkFiles() {
+            const hasFiles = uploadedFiles.children.length > 0;
+            confirmButton.disabled = !hasFiles;
+        }
+        
+        confirmButton.addEventListener('click', function() {
+            const fileCount = uploadedFiles.children.length;
+            alert(`已成功上传 ${fileCount} 个文件！`);
+            // 上传成功后自动跳转到首页
+            setTimeout(goToHome, 1000);
+        });
+    </script>
+</body>
+</html>

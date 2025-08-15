@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>消息列表</title>
+    <style>
+        /* 基础样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #f5f5f5;
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            padding-bottom: 60px; /* 为底部导航留出空间 */
+        }
+
+        /* 顶部导航栏 */
+        .nav-bar {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            height: 60px;
+            background: white;
+            color: black;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            z-index: 1000;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .nav-title {
+            flex: 1;
+            text-align: center;
+            font-size: 18px;
+        }
+
+        .nav-icon {
+            width: 30px;
+            height: 30px;
+            padding: 5px;
+            cursor: pointer;
+            border-radius: 50%;
+            transition: background-color 0.2s;
+        }
+        
+        .nav-icon:hover {
+            background-color: #f0f0f0;
+        }
+
+        /* 返回按钮样式（优化交互） */
+        .back-btn {
+            width: 24px;
+            height: 24px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%23333" d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"/></svg>');
+            background-size: contain;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+        
+        .back-btn:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .back-btn:active {
+            transform: scale(0.9);
+        }
+
+        /* 消息列表 */
+        .message-list {
+            margin-top: 60px;
+            padding: 10px;
+        }
+
+        .message-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background: white;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .message-item:hover {
+            background: #f9f9f9;
+            transform: translateY(-1px);
+        }
+
+        .avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            margin-right: 15px;
+            object-fit: cover; /* 确保图片自适应圆形 */
+        }
+
+        .message-content {
+            flex: 1;
+        }
+
+        .message-title {
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        .message-preview {
+            color: #888;
+            font-size: 14px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .badge {
+            background: #ff4444;
+            color: white;
+            min-width: 20px;
+            height: 20px;
+            border-radius: 10px;
+            padding: 0 6px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 功能菜单 */
+        .menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.3);
+            display: none;
+            z-index: 2000;
+        }
+
+        .menu-box {
+            position: absolute;
+            right: 15px;
+            top: 60px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+            padding: 10px 0;
+            min-width: 150px;
+        }
+
+        .menu-item {
+            padding: 12px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+
+        .menu-item:hover {
+            background: #f5f5f5;
+        }
+
+        .menu-item img {
+            width: 20px;
+            margin-right: 10px;
+        }
+		
+		/* 底部导航栏 */
+		.bottom-nav {
+		    position: fixed;
+		    bottom: 0;
+		    width: 100%;
+		    height: 60px;
+		    background: white;
+		    display: flex;
+		    justify-content: space-around;
+		    align-items: center;
+		    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+		    z-index: 1000;
+		}
+		.nav-item {
+		    text-align: center;
+		    color: #666;
+		    font-size: 12px;
+		    cursor: pointer;
+		    padding: 5px 10px;
+		    border-radius: 4px;
+		    transition: background-color 0.2s;
+		}
+		
+		.nav-item:hover {
+		    background-color: #f5f5f5;
+		}
+		
+		.nav-item.active {
+		    color: #007bff; /* 当前页面导航项高亮 */
+		}
+		
+		.nav-item img {
+		    width: 24px;
+		    height: 24px;
+		    display: block;
+		    margin: 0 auto 5px;
+		}
+    </style>
+</head>
+<body>
+    <!-- 顶部导航 -->
+    <div class="nav-bar">
+        <button class="back-btn" onclick="goToHome()"></button>
+        <div class="nav-title">消息</div>
+        <img src="cd2ca9fa6a5937f3466cec481f631aa.jpg" class="nav-icon" onclick="toggleMenu()">
+    </div>
+
+    <!-- 消息列表 -->
+    <div class="message-list">
+        <!-- 家属消息项 -->
+        <div class="message-item" onclick="openFamilyChat()">
+            <img src="21853f2fc2bd4455ad3e701a497533e.jpg" class="avatar">
+            <div class="message-content">
+                <div class="message-title">家属</div>
+                <div class="message-preview">[新消息] 今晚回家吃饭吗？</div>
+            </div>
+            <div class="badge">3</div>
+        </div>
+
+        <!-- 卫士消息项 - 修改点击事件，跳转到weishi.html -->
+        <div class="message-item" onclick="openGuardianChat()">
+            <img src="cd2ca9fa6a5937f3466cec481f631aa.jpg" class="avatar">
+            <div class="message-content">
+                <div class="message-title">卫士</div>
+                <div class="message-preview">系统通知：设备电量不足</div>
+            </div>
+            <div class="badge">1</div>
+        </div>
+    </div>
+    
+    <!-- 底部导航 -->
+	<div class="bottom-nav">
+	    <div class="nav-item" onclick="navigate('index.html')">
+	        <img src="shouye.jpg" alt="首页">
+	        <div>首页</div>
+	    </div>
+	    <div class="nav-item active" onclick="navigate('message.html')">
+	        <img src="xiaoxi.jpg" alt="消息">
+	        <div>消息</div>
+	    </div>
+	    <div class="nav-item" onclick="navigate('mine.html')">
+	        <img src="wode.jpg" alt="我的">
+	        <div>我的</div>
+	    </div>
+	</div>
+
+    <!-- 功能菜单 -->
+    <div class="menu-overlay" onclick="toggleMenu()">
+        <div class="menu-box">
+            <div class="menu-item" onclick="addFriend()">
+                <img src="91ff7875168f72bd6092344579c2e9f.jpg">
+                添加朋友
+            </div>
+            <div class="menu-item" onclick="scanQR()">
+                <img src="91ff7875168f72bd6092344579c2e9f.jpg">
+                扫一扫
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 跳转到首页功能
+        function goToHome() {
+            const homePage = "index.html";
+            
+            if (window.location.pathname.endsWith(homePage)) {
+                console.log("已在首页，无需跳转");
+                return;
+            }
+            
+            try {
+                console.log(`从消息列表跳转到首页`);
+                window.location.href = homePage;
+            } catch (error) {
+                console.error("首页跳转失败:", error);
+                alert("无法返回首页，请检查页面文件是否存在。");
+            }
+        }
+        
+        // 未读消息状态管理
+        let unreadMessages = {
+            family: 3,  // 家属的未读数
+            guardian: 1  // 卫士的未读数
+        }
+
+        // 打开家属聊天页面
+        function openFamilyChat() {
+            // 清除家属的未读消息
+            unreadMessages.family = 0;
+            updateBadges();
+            // 跳转到家属聊天页面
+            window.location.href = "family-chat.html";
+        }
+
+        // 新增：打开卫士聊天页面（跳转到weishi.html）
+        function openGuardianChat() {
+            // 清除卫士的未读消息
+            unreadMessages.guardian = 0;
+            updateBadges();
+            // 跳转到卫士聊天页面
+            window.location.href = "weishi.html";
+        }
+
+        // 更新所有小红点
+        function updateBadges() {
+            // 更新家属消息的未读标记
+            const familyBadge = document.querySelector('.message-list .message-item:first-child .badge');
+            if (familyBadge) {
+                familyBadge.textContent = unreadMessages.family || '';
+                familyBadge.style.display = unreadMessages.family > 0 ? 'flex' : 'none';
+            }
+            
+            // 更新卫士消息的未读标记
+            const guardianBadge = document.querySelector('.message-list .message-item:last-child .badge');
+            if (guardianBadge) {
+                guardianBadge.textContent = unreadMessages.guardian || '';
+                guardianBadge.style.display = unreadMessages.guardian > 0 ? 'flex' : 'none';
+            }
+        }
+
+        // 显示/隐藏功能菜单
+        function toggleMenu() {
+            const menu = document.querySelector('.menu-overlay');
+            menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+        }
+
+        // 模拟接收新消息
+        function receiveNewMessage(type) {
+            if (unreadMessages.hasOwnProperty(type)) {
+                unreadMessages[type]++;
+                updateBadges();
+            }
+        }
+
+        // 通用跳转函数
+        function navigate(page) {
+            window.location.href = page;
+        }
+        
+        // 初始化
+        updateBadges();
+
+        // 模拟定时收到新消息（测试用）
+        setInterval(() => {
+            // 随机给家属或卫士发送新消息
+            const randomType = Math.random() > 0.5 ? 'family' : 'guardian';
+            receiveNewMessage(randomType);
+        }, 15000);
+    </script>
+</body>
+</html>
+    

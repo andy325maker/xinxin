@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>上传病例</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: white;
+        }
+        /* 主题栏样式 */
+        .header {
+            background: white;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            position: relative;
+            border-bottom: 2px solid #ddd;
+        }
+        .header h1 {
+            font-size: 24px;
+            font-weight: normal;
+            margin: 0;
+        }
+        .back-icon {
+            position: absolute;
+            left: 20px;
+            font-size: 24px;
+            cursor: pointer;
+            color: black;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+        .back-icon:hover {
+            color: #007bff;
+            background-color: #f0f7ff;
+        }
+        .back-icon:active {
+            transform: scale(0.9);
+        }
+        .upload-section {
+            margin: 30px 20px;
+        }
+        .upload-section h2 {
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        .upload-section input[type="text"] {
+            width: calc(100% - 150px);
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        .file-upload {
+            border: 2px dashed #ccc;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        .file-upload input[type="file"] {
+            display: none;
+        }
+        .file-upload label {
+            cursor: pointer;
+            color: #007bff;
+            display: inline-block;
+            padding: 15px 30px;
+            border: 1px solid #007bff;
+            border-radius: 4px;
+            background-color: #f0f8ff;
+            font-size: 18px;
+            transition: all 0.2s;
+        }
+        .file-upload label:hover {
+            background-color: #e6f2ff;
+        }
+        .file-count {
+            font-size: 16px;
+            color: #666;
+        }
+        .instructions {
+            font-size: 16px;
+            color: #666;
+            margin-top: 30px;
+            padding: 0 20px;
+        }
+        .instructions h3 {
+            font-size: 20px;
+            margin-bottom: 15px;
+        }
+        .instructions ol {
+            padding-left: 20px;
+        }
+        .instructions li {
+            margin-bottom: 10px;
+        }
+        /* 上传按钮样式 */
+        .submit-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 12px 24px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 20px 20px;
+            transition: background-color 0.3s;
+        }
+        .submit-button:hover {
+            background-color: #0056b3;
+        }
+        .uploader-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .uploader-container label {
+            font-size: 18px;
+            white-space: nowrap;
+        }
+        .uploader-container .file-count {
+            margin: 0;
+            font-size: 16px;
+            color: #666;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+    <!-- 主题栏 -->
+    <div class="header">
+        <!-- 左上角箭头：跳转到previous-reports页面 -->
+        <span class="back-icon" onclick="goToPreviousReports()">&lt;</span>
+        <h1>上传病例</h1>
+    </div>
+
+    <!-- 上传病例内容 -->
+    <div class="upload-section">
+        <div class="file-upload">
+            <label for="file-input">点击选择文件</label>
+            <input type="file" id="file-input" accept=".txt,.doc,.pdf,.docx,.zip,.rar,.wps" multiple>
+        </div>
+
+        <!-- 上传者和字数限制放在一条直线上 -->
+        <div class="uploader-container">
+            <label for="uploader">上传者：</label>
+            <input type="text" id="uploader" placeholder="请输入上传者">
+            <span class="file-count">0/300</span>
+        </div>
+    </div>
+
+    <div class="instructions">
+        <h3>说明：</h3>
+        <ol>
+            <li>上传格式仅限于TXT、DOC、PDF、DOCX、ZIP、RAR、WPS，附件大小50M以下；</li>
+            <li>请勿上传加密过的文档。</li>
+        </ol>
+    </div>
+    
+    <!-- 上传按钮 -->
+    <button class="submit-button" onclick="submitUpload()">确认上传</button>
+
+    <script>
+        // 核心修改：左上角箭头跳转到previous-reports页面
+        function goToPreviousReports() {
+            const reportsPage = "previous-reports.html";
+            
+            // 检查是否已在目标页面，避免无效跳转
+            if (window.location.pathname.endsWith(reportsPage)) {
+                console.log("已在往期报告页面，无需跳转");
+                return;
+            }
+            
+            // 尝试跳转并处理可能的错误
+            try {
+                console.log(`从上传病例页面跳转到往期报告页面`);
+                window.location.href = reportsPage;
+            } catch (error) {
+                console.error("跳转失败:", error);
+                alert("无法返回往期报告页面，请检查页面文件是否存在。");
+            }
+        }
+        
+        // 文件选择处理
+        document.getElementById('file-input').addEventListener('change', function(event) {
+            const files = event.target.files;
+            if (files.length > 0) {
+                document.querySelector('.uploader-container .file-count').textContent = files.length + '/300';
+            }
+        });
+        
+        // 提交上传处理
+        function submitUpload() {
+            const uploader = document.getElementById('uploader').value;
+            const files = document.getElementById('file-input').files;
+            
+            if (!uploader) {
+                alert('请输入上传者信息');
+                return;
+            }
+            
+            if (files.length === 0) {
+                alert('请选择要上传的文件');
+                return;
+            }
+            
+            // 模拟上传成功
+            alert(`上传成功！共上传 ${files.length} 个文件，上传者：${uploader}`);
+            // 上传成功后跳转到往期报告页面（保持逻辑一致）
+            goToPreviousReports();
+        }
+    </script>
+</body>
+</html>

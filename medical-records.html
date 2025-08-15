@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>往期病例</title>
+    <style>
+        /* 基础样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #f0f2f5;
+            font-family: "Microsoft YaHei", sans-serif;
+            padding-top: 60px; /* 为顶部栏留出空间 */
+            padding-bottom: 20px;
+        }
+
+        /* 顶部标题栏 */
+        .top-bar {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            height: 60px;
+            background: white;
+            color: black;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            padding: 0 20px;
+        }
+
+        /* 优化返回箭头样式和交互 */
+        .top-bar .back-arrow {
+            font-size: 24px;
+            cursor: pointer;
+            position: absolute;
+            left: 20px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%; /* 圆形点击区域 */
+            transition: all 0.2s; /* 平滑过渡效果 */
+        }
+        
+        .top-bar .back-arrow:hover {
+            color: #007bff;
+            background-color: #f0f7ff; /* 悬停背景色变化 */
+        }
+        
+        .top-bar .back-arrow:active {
+            transform: scale(0.9); /* 点击反馈 */
+        }
+
+        .top-bar h1 {
+            font-size: 20px;
+            font-weight: normal;
+            text-align: center;
+        }
+
+        /* 病例页面样式 */
+        .container {
+            max-width: 800px;
+            width: 90%;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* 病例列表样式 */
+        .cases-list {
+            margin-top: 20px;
+        }
+        
+        .case-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .case-item:hover {
+            background-color: #f9f9f9;
+        }
+        
+        .case-info {
+            flex: 1;
+        }
+        
+        .case-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .case-meta {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .case-arrow {
+            color: #999;
+            font-size: 18px;
+        }
+
+        .upload-section {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .upload-section:last-child {
+            border-bottom: none;
+        }
+
+        .upload-section h2 {
+            margin-bottom: 15px;
+            font-size: 18px;
+            color: #333;
+        }
+
+        .upload-section label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .upload-section input[type="file"] {
+            display: none;
+        }
+
+        .upload-section .custom-file-upload,
+        .upload-section button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-align: center;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+
+        .upload-section .custom-file-upload:hover,
+        .upload-section button:hover {
+            background-color: #0056b3;
+        }
+
+        .upload-section input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        
+        /* 已上传文件显示区域 */
+        .uploaded-files {
+            margin-top: 15px;
+        }
+        
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px dashed #eee;
+        }
+        
+        .file-icon {
+            margin-right: 10px;
+            color: #666;
+        }
+        
+        .file-name {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .remove-file {
+            color: #ff4444;
+            cursor: pointer;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部标题栏 -->
+    <div class="top-bar">
+        <div class="back-arrow" onclick="goToHome()">&#60;</div>
+        <h1>往期病例</h1>
+    </div>
+
+    <!-- 病例页面 -->
+    <div class="container">
+        <!-- 确认病例部分 -->
+        <div class="upload-section">
+            <h2>上传新病例</h2>
+            <button type="button" onclick="confirmCase()">确认上传</button>
+        </div>
+
+        <!-- 病例上传部分 -->
+        <div class="upload-section">
+            <h2>病例文件</h2>
+            <label for="fileUpload1" class="custom-file-upload">
+                选择要上传的文件
+            </label>
+            <input type="file" id="fileUpload1" name="fileUpload1" accept=".pdf,.doc,.docx,.jpg,.png">
+            
+            <div class="uploaded-files" id="caseFiles">
+                <!-- 上传的文件将显示在这里 -->
+            </div>
+            
+            <br><br>
+            <label for="uploader1">上传者：</label>
+            <input type="text" id="uploader1" name="uploader1" placeholder="请输入上传者姓名">
+        </div>
+
+        <!-- 医院上传部分 -->
+        <div class="upload-section">
+            <h2>医院资料</h2>
+            <label for="fileUpload2" class="custom-file-upload">
+                选择要上传的文件
+            </label>
+            <input type="file" id="fileUpload2" name="fileUpload2" accept=".pdf,.doc,.docx,.jpg,.png">
+            
+            <div class="uploaded-files" id="hospitalFiles">
+                <!-- 上传的文件将显示在这里 -->
+            </div>
+            
+            <br><br>
+            <label for="uploader2">医院名称：</label>
+            <input type="text" id="uploader2" name="uploader2" placeholder="请输入医院名称">
+        </div>
+        
+        <!-- 往期病例列表 -->
+        <div class="cases-list">
+            <h2>往期病例记录</h2>
+            
+            <div class="case-item" onclick="openCase('2023-11-01')">
+                <div class="case-info">
+                    <div class="case-title">常规体检报告</div>
+                    <div class="case-meta">上传于 2023-11-01 · 上传者：张三</div>
+                </div>
+                <div class="case-arrow">→</div>
+            </div>
+            
+            <div class="case-item" onclick="openCase('2023-10-15')">
+                <div class="case-info">
+                    <div class="case-title">心脏检查报告</div>
+                    <div class="case-meta">上传于 2023-10-15 · 上传者：张三</div>
+                </div>
+                <div class="case-arrow">→</div>
+            </div>
+            
+            <div class="case-item" onclick="openCase('2023-09-20')">
+                <div class="case-info">
+                    <div class="case-title">年度体检报告</div>
+                    <div class="case-meta">上传于 2023-09-20 · 上传者：李四</div>
+                </div>
+                <div class="case-arrow">→</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 完善的跳转到首页功能
+        function goToHome() {
+            // 1. 使用系统统一的首页路径
+            const homePage = "index.html";
+            
+            // 2. 检查是否已在首页，避免无效跳转
+            if (window.location.pathname.endsWith(homePage)) {
+                console.log("已在首页，无需跳转");
+                return;
+            }
+            
+            // 3. 尝试跳转并处理可能的错误
+            try {
+                console.log(`从 ${window.location.pathname} 跳转到首页`);
+                window.location.href = homePage;
+            } catch (error) {
+                console.error("首页跳转失败:", error);
+                alert("无法返回首页，请检查页面文件是否存在。");
+            }
+        }
+
+        // 确认病例功能
+        function confirmCase() {
+            const uploader1 = document.getElementById('uploader1').value;
+            const uploader2 = document.getElementById('uploader2').value;
+            const caseFiles = document.getElementById('caseFiles').children.length;
+            const hospitalFiles = document.getElementById('hospitalFiles').children.length;
+            
+            if (!uploader1 && caseFiles > 0) {
+                alert('请输入病例文件上传者姓名');
+                return;
+            }
+            
+            if (!uploader2 && hospitalFiles > 0) {
+                alert('请输入医院名称');
+                return;
+            }
+            
+            if (caseFiles === 0 && hospitalFiles === 0) {
+                alert('请至少上传一个文件');
+                return;
+            }
+            
+            alert('病例已确认并上传！');
+            // 上传成功后刷新页面或更新列表
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        }
+        
+        // 打开病例详情
+        function openCase(date) {
+            window.location.href = `case-detail.html?date=${date}`;
+        }
+        
+        // 处理文件上传显示
+        function handleFileUpload(inputId, containerId) {
+            const input = document.getElementById(inputId);
+            const container = document.getElementById(containerId);
+            
+            input.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'file-item';
+                    fileItem.innerHTML = `
+                        <div class="file-icon">📄</div>
+                        <div class="file-name">${file.name}</div>
+                        <div class="remove-file" onclick="removeFile(this)">&times;</div>
+                    `;
+                    container.appendChild(fileItem);
+                    
+                    // 重置输入，允许重复选择同一文件
+                    input.value = '';
+                }
+            });
+        }
+        
+        // 移除文件
+        function removeFile(element) {
+            element.parentElement.remove();
+        }
+        
+        // 初始化文件上传处理
+        handleFileUpload('fileUpload1', 'caseFiles');
+        handleFileUpload('fileUpload2', 'hospitalFiles');
+    </script>
+</body>
+</html>
